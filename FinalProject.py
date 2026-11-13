@@ -2,21 +2,24 @@ from collections import deque
 from heapq import heappop, heappush
 import random
 
+def heuristic(position, end):
+    return abs(position[0] - end[0]) + abs(position[1] - end[1])
+
 def solve_maze(maze):
-    return _search_maze(maze, algorithm="bfs")
+    return search_maze(maze, algorithm="bfs")
 
 def solve_maze_dfs(maze):
-    return _search_maze(maze, algorithm="dfs")
+    return search_maze(maze, algorithm="dfs")
 
 def solve_maze_astar(maze):
-    return _search_maze(maze, algorithm="astar")
+    return search_maze(maze, algorithm="astar")
 
-def _search_maze(maze, algorithm):
+def search_maze(maze, algorithm):
     rows, cols = len(maze), len(maze[0])
     start = None
     end = None
 
-    # Find the start (S) and end (E) positions in the maze
+    # Assigns the starts and end.
     for r in range(rows):
         for c in range(cols):
             if maze[r][c] == 'S':
@@ -25,14 +28,14 @@ def _search_maze(maze, algorithm):
                 end = (r, c)
 
     if start is None or end is None:
+        print("Error, no start and end point found.")
         return None  # Start or end not found
 
-    # Directions for moving in the maze (up, down, left, right)
+
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
     if algorithm == "astar":
-        heuristic = lambda position: abs(position[0] - end[0]) + abs(position[1] - end[1])
-        frontier = [(heuristic(start), 0, start)]
+        frontier = [(heuristic(start, end), 0, start)]
         costs = {start: 0}
     else:
         frontier = deque([start])
@@ -55,22 +58,20 @@ def _search_maze(maze, algorithm):
         for dr, dc in directions:
             neighbor = (current[0] + dr, current[1] + dc)
 
-            if (0 <= neighbor[0] < rows and
-                0 <= neighbor[1] < cols and
-                maze[neighbor[0]][neighbor[1]] != '#'):
+            if (0 <= neighbor[0] < rows and 0 <= neighbor[1] < cols and maze[neighbor[0]][neighbor[1]] != '#'):
                 if algorithm == "astar":
                     new_cost = current_cost + 1
                     if new_cost < costs.get(neighbor, float("inf")):
                         costs[neighbor] = new_cost
                         parent[neighbor] = current
-                        priority = new_cost + heuristic(neighbor)
+                        priority = new_cost + heuristic(neighbor, end)
                         heappush(frontier, (priority, new_cost, neighbor))
                 elif neighbor not in visited:
                     visited.add(neighbor)
                     parent[neighbor] = current
                     frontier.append(neighbor)
 
-    # Reconstruct the path from end to start
+    
     path = None
     if end in parent:
         path = []
@@ -130,12 +131,15 @@ def print_maze(maze, explored=None, path=None):
                 display[r][c] = '*'
 
     for row in display:
-        print(''.join(cell + ' ' if cell in {'S', 'E'} else cell * 2 for cell in row))
+        print(' '.join(row))
 
     if explored is not None and path is None:
         print("No possible Solve")
 
-maze = generate_random_maze(15, 15)
+r = int(input("How many rows do you want the maze to be (minimum of 4): "))
+c = int(input("How many columns do you want the maze to be (minimum of 4): "))
+
+maze = generate_random_maze(r, c)
 print_maze(maze)
 search_type = input("Choose search type (0 for BFS, 1 for DFS, 2 for A*): ")
 while search_type not in {"0", "1", "2"}:
